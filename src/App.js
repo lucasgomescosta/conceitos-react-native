@@ -1,78 +1,81 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 
 import {
   SafeAreaView,
   View,
-  FlatList,
   Text,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
-
-import api from './services/api';
+import api from "./services/api";
 
 export default function App() {
+
   const [repositories, setRepositories] = useState([]);
 
-  useEffect(() => {
-    api.get('repositories')
-    .then(response => {
-      setRepositories(response.data);
-    })
-  }, [])
-
   async function handleLikeRepository(id) {
-    const response = await api.post(`repositories/${id}/like`)
-
-    const likedRepository = response.data;
-   
-    const repositoryupdate = repositories.map(repository => {
-      if(repository.id === id) {
-        return likedRepository;
-      } else {
+    try {
+      const res = await api.post(`repositories/${id}/like`);
+      const data = repositories.map(repository => {
+        if(repository.id === id){
+          repository = res.data
+        }
         return repository;
-      }
-    });
-    setRepositories(repositoryupdate);
+      })
+      setRepositories(data); 
+    } catch (error) {
+      return;
+    }
   }
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get("repositories");
+        setRepositories(res.data); 
+      } catch (error) {
+        return;
+      }
+    })();
+  }, []);
 
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="#7159c1" />
       <SafeAreaView style={styles.container}>
+        {repositories.length > 0 && repositories.map(repository => (
+          <View key={repository.id} style={styles.repositoryContainer}>
+          <Text style={styles.repository}>{repository.title}</Text>
 
-        <FlatList
-          data={repositories}
-          keyExtractor={repositorie => repositorie.id}
-          renderItem={({ item: repositorie }) => (
-            <View style={styles.repositoryContainer}>
-              <Text style={styles.repository}>{repositorie.title}</Text>
-              <View style={styles.techsContainer}>
-                {repositorie.tech.map(tech => (
-                  <Text key={tech} style={styles.tech}>{tech}</Text>
-                ))}
-              </View>
-              <View style={styles.likesContainer}>
-                <Text
-                  style={styles.likeText}
-                  // Remember to replace "1" below with repository ID: `}
-                  testID={`repository-likes-${repositorie.id}`}
-                >
-                  {repositorie.likes} curtidas
-                </Text>
-              </View> 
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => handleLikeRepository(repositorie.id)}
-                // Remember to replace "1" below with repository ID: 
-                testID={`like-button-${repositorie.id}`}
-              >
-                <Text style={styles.buttonText}>Curtir</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
+          <View style={styles.techsContainer}>
+            {repository.techs.map(tech => (
+              <Text key={tech} style={styles.tech}>
+                {tech}
+              </Text>
+            ))}
+          </View>
+
+          <View style={styles.likesContainer}>
+            <Text
+              style={styles.likeText}
+              // Remember to replace "1" below with repository ID: {`repository-likes-${repository.id}`}
+              testID={`repository-likes-${repository.id}`}
+            >
+              {`${repository.likes} ${repository.likes === 1 ? "curtida" : "curtidas"}`}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => handleLikeRepository(repository.id)}
+            // Remember to replace "1" below with repository ID: {`like-button-${repository.id}`}
+            testID={`like-button-${repository.id}`}
+          >
+            <Text style={styles.buttonText}>Curtir</Text>
+          </TouchableOpacity>
+        </View>
+        ))}
       </SafeAreaView>
     </>
   );
