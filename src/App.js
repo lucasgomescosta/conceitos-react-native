@@ -29,7 +29,6 @@ export default function App() {
   }, [])
 
   async function handleLikeRepository(id) {
-    console.log(id)
     const response = await api.post(`repositories/${id}/like`)
     setRepositories([...repositories, response.data]);
   }
